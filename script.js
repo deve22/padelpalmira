@@ -168,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
         bienvenidoMsgEl.textContent = `Bienvenido a ${categoriaActiva}`;
         seleccionCategoriaScreen.classList.remove('active-screen'); seleccionCategoriaScreen.style.display = 'none';
         appContentScreen.style.display = 'block'; appContentScreen.classList.add('active-screen');
-
+        
         popularFiltroMeses(); 
 
         document.querySelector('.nav-button[data-tab="inicio"]').click();
@@ -369,7 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function moverJugadorIndividual(n, g, cO, jPCD) { let cD=cO; if(g&&cD>1)cD--; else if(!g&&cD<3)cD++; jPCD[cD].push({nombre:n,ganoUltimoPartido:g});}
     function moverParejaFija(pId, g, cO, pPCD) { let cD=cO; if(g&&cD>1)cD--; else if(!g&&cD<3)cD++; pPCD[cD].push({parejaId:pId,ganoUltimoPartido:g});}
     function actualizarHistorialParejas(t, nJ1, nJ2, nR) { if(t.tipo!=='individual')return; const j1=t.jugadores.find(j=>j.nombre===nJ1),j2=t.jugadores.find(j=>j.nombre===nJ2); if(j1&&!j1.historialParejasRonda.some(p=>p.companeroNombre===nJ2&&p.rondaNumero===nR))j1.historialParejasRonda.push({companeroNombre:nJ2,rondaNumero:nR}); if(j2&&!j2.historialParejasRonda.some(p=>p.companeroNombre===nJ1&&p.rondaNumero===nR))j2.historialParejasRonda.push({companeroNombre:nJ1,rondaNumero:nR});}
-
+    
     // MODIFICADO Y REFORZADO: asignarParejasEnCancha
     function asignarParejasEnCancha(torneo, nombresJugadoresCancha, numeroRondaActual) {
         if (nombresJugadoresCancha.length !== 4) {
@@ -394,14 +394,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             return !j1.historialParejasRonda.some(h => h.companeroNombre === j2.nombre);
         }
-
+        
         const obtenerRondaMasAntiguaSiRepetida = (j1, j2) => {
             if (!j1 || !j2 || !j1.historialParejasRonda) return Infinity;
             const historial = j1.historialParejasRonda.filter(h => h.companeroNombre === j2.nombre);
             if (historial.length === 0) return Infinity; 
             return Math.min(...historial.map(h => h.rondaNumero));
         };
-
+        
         let combinacionesEvaluadas = [
             { par1: [p[0], p[1]], par2: [p[2], p[3]] },
             { par1: [p[0], p[2]], par2: [p[1], p[3]] },
@@ -409,25 +409,30 @@ document.addEventListener('DOMContentLoaded', () => {
         ];
 
         combinacionesEvaluadas.forEach(comb => {
-            comb.par1Nueva = esParejaNueva(comb.par1[0], comb.par1[1]);
-            comb.par2Nueva = esParejaNueva(comb.par2[0], comb.par2[1]);
+            // Asegurarse de que comb.par1Obj y comb.par2Obj se definan correctamente
+            // Esto ya estaba en tu código, pero es crucial.
+            comb.par1Obj = [torneo.jugadores.find(j => j.nombre === comb.par1[0].nombre), torneo.jugadores.find(j => j.nombre === comb.par1[1].nombre)];
+            comb.par2Obj = [torneo.jugadores.find(j => j.nombre === comb.par2[0].nombre), torneo.jugadores.find(j => j.nombre === comb.par2[1].nombre)];
+
+            comb.par1Nueva = esParejaNueva(comb.par1Obj[0], comb.par1Obj[1]);
+            comb.par2Nueva = esParejaNueva(comb.par2Obj[0], comb.par2Obj[1]);
             comb.nuevasCount = (comb.par1Nueva ? 1 : 0) + (comb.par2Nueva ? 1 : 0);
-
+            
             let antiguedadScore = 0; 
-            if (!comb.par1Nueva) antiguedadScore += obtenerRondaMasAntiguaSiRepetida(comb.par1[0], comb.par1[1]);
-            else antiguedadScore += -Infinity; 
-
-            if (!comb.par2Nueva) antiguedadScore += obtenerRondaMasAntiguaSiRepetida(comb.par2[0], comb.par2[1]);
-            else antiguedadScore += -Infinity; 
-
-            comb.antiguedadAgregada = antiguedadScore;
+            if (!comb.par1Nueva) antiguedadScore += obtenerRondaMasAntiguaSiRepetida(comb.par1Obj[0], comb.par1Obj[1]);
+            // else antiguedadScore += -Infinity; // No es necesario el -Infinity si se ordena primero por nuevasCount
+            
+            if (!comb.par2Nueva) antiguedadScore += obtenerRondaMasAntiguaSiRepetida(comb.par2Obj[0], comb.par2Obj[1]);
+            // else antiguedadScore += -Infinity; 
+            
+            comb.antiguedadAgregada = antiguedadScore; 
         });
 
         combinacionesEvaluadas.sort((a, b) => {
             if (b.nuevasCount !== a.nuevasCount) return b.nuevasCount - a.nuevasCount; 
             return a.antiguedadAgregada - b.antiguedadAgregada; 
         });
-
+        
         if (combinacionesEvaluadas.length > 0) {
             const elegida = combinacionesEvaluadas[0];
             console.log(`Ronda ${numeroRondaActual}, Cancha con: ${nombresJugadoresCancha.join(', ')}. Elegida: (${elegida.par1[0].nombre}&${elegida.par1[1].nombre}) vs (${elegida.par2[0].nombre}&${elegida.par2[1].nombre}). Nuevas: ${elegida.nuevasCount}, AntigüedadAgregada (score): ${elegida.antiguedadAgregada}`);
@@ -436,7 +441,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 [elegida.par2[0].nombre, elegida.par2[1].nombre]
             ];
         }
-
+        
         console.error("Fallback extremo: No se pudo determinar combinación de parejas.", nombresJugadoresCancha);
         return [[p[0].nombre, p[1].nombre], [p[2].nombre, p[3].nombre]];
     }
@@ -451,7 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
         nombreTorneoDetalleEl.textContent = torneo.nombre; const fechaC = new Date(torneo.fechaCreacion);
         infoTipoTorneoDetalleEl.textContent = `Tipo: ${torneo.tipo} | Estado: ${torneo.estado==='actual'?'En Curso':'Finalizado'} | Creado: ${fechaC.toLocaleDateString()}`;
         rondasContainerEl.innerHTML = '';
-        console.log("Asignando click a eliminar para torneo ID:", torneo.id, torneo.nombre); 
+        // console.log("Asignando click a eliminar para torneo ID:", torneo.id, torneo.nombre); 
         btnEliminarTorneoDetalle.onclick = () => confirmarEliminarTorneo(torneo.id);
         btnExportarTorneoDetalle.style.display = torneo.estado === 'historico' ? 'inline-flex' : 'none';
         btnExportarTorneoDetalle.onclick = () => exportarResultadosTorneoEspecifico(torneo.id);
@@ -483,7 +488,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(torneo.estado==='historico'){ btnGenerarSiguienteRonda.style.display='none'; btnFinalizarTorneo.style.display='none';}
         renderizarTablaPuntosTorneoActual(torneo);
     }
-
+    
     // MODIFICADO: registrarResultadoPartido para borrar rondas posteriores si se edita torneo finalizado
     function registrarResultadoPartido(torneoId, rondaIdx, partidoIdx, canchaNum, equipoSeleccionadoKey) {
         if (!categoriaActiva) return;
@@ -499,24 +504,17 @@ document.addEventListener('DOMContentLoaded', () => {
         // Si se hace clic en el mismo ganador, permitir deseleccionar (marcar como sin ganador)
         if (ganadorOriginalPartido === nuevoGanadorKey) {
             if (confirm("Este equipo ya es el ganador. ¿Deseas quitar el resultado de este partido?" + 
-                        (esEdicionDeFinalizadoOriginal ? "\n\nADVERTENCIA: Esto borrará las rondas posteriores y reabrirá el torneo." : ""))) {
+                        (esEdicionDeFinalizadoOriginal ? "\n\nADVERTENCIA: Esto borrará las rondas y resultados posteriores y reabrirá el torneo." : ""))) {
                 nuevoGanadorKey = null; 
             } else {
                 return; 
             }
         }
-
+        
         let borrarRondasPosteriores = false;
+        // Solo preguntar si hay un cambio real en el ganador Y el torneo estaba finalizado
         if (esEdicionDeFinalizadoOriginal && (nuevoGanadorKey !== ganadorOriginalPartido)) {
-            // Solo preguntar si realmente hay un cambio en el ganador
             if (confirm(`Este torneo está finalizado. Cambiar el resultado de la Ronda ${rondaIdx + 1} borrará todas las rondas y resultados posteriores (desde la Ronda ${rondaIdx + 2}) y el torneo volverá a estar en curso.\n\n¿Deseas continuar?`)) {
-                borrarRondasPosteriores = true;
-            } else {
-                return; 
-            }
-        } else if (esEdicionDeFinalizadoOriginal && nuevoGanadorKey === null && ganadorOriginalPartido !== null) {
-            // Caso especial: se quita un resultado en un torneo finalizado
-             if (confirm(`Quitar el resultado de la Ronda ${rondaIdx + 1} en este torneo finalizado borrará todas las rondas y resultados posteriores (desde la Ronda ${rondaIdx + 2}) y el torneo volverá a estar en curso.\n\n¿Deseas continuar?`)) {
                 borrarRondasPosteriores = true;
             } else {
                 return; 
@@ -529,60 +527,58 @@ document.addEventListener('DOMContentLoaded', () => {
             const puntosCancha = PUNTOS_POR_CANCHA[canchaNum];
             const ganadoresAnterioresNombres = ganadorOriginalPartido === 'equipo1' ? partido.equipo1 : partido.equipo2;
             const datosParejasAnterior = torneo.tipo === 'parejas' ? partido.datosParejasSiAplica : null;
-
+            
             ganadoresAnterioresNombres.forEach(n => recalcularPuntosGlobalesPara.add(n));
-            // Los puntos extra se manejan globalmente si se borran rondas
             modificarPuntosRondaYTorneo(torneo, ganadoresAnterioresNombres, datosParejasAnterior, ganadorOriginalPartido, -puntosCancha, canchaNum, false);
         }
 
         // 2. Si se van a borrar rondas posteriores
         if (borrarRondasPosteriores) {
             console.log(`Borrando rondas posteriores a la ronda ${rondaIdx + 1}`);
-            // Revertir puntos de las rondas que se van a eliminar y recolectar jugadores afectados
-            // Iterar hacia atrás para eliminar de forma segura mientras se modifica el array
+            // Antes de borrar, recopilar todos los jugadores de las rondas eliminadas para recalcular sus puntos globales
+            // y revertir los puntos de ronda y victoriasEnCancha1 de esas rondas eliminadas.
             for (let i = torneo.rondas.length - 1; i > rondaIdx; i--) { 
                 const rondaAEliminar = torneo.rondas[i];
                 rondaAEliminar.partidos.forEach(p => {
                     if (p.ganadorEquipoKey) {
                         const ptsC = PUNTOS_POR_CANCHA[p.cancha];
                         const ganNombres = p.ganadorEquipoKey === 'equipo1' ? p.equipo1 : p.equipo2;
-                        // Usar p.datosParejasSiAplica para torneos de parejas
                         const datPar = torneo.tipo === 'parejas' ? p.datosParejasSiAplica : null; 
                         ganNombres.forEach(n => recalcularPuntosGlobalesPara.add(n));
-                        // Revertir puntos y victorias de esta ronda eliminada
                         modificarPuntosRondaYTorneo(torneo, ganNombres, datPar, p.ganadorEquipoKey, -ptsC, p.cancha, false);
                     }
                 });
             }
-            torneo.rondas.splice(rondaIdx + 1); // Eliminar las rondas posteriores
-
-            // Revertir estado del torneo
+            torneo.rondas.splice(rondaIdx + 1); 
+            
             if (torneo.estado === 'historico') { 
-                restarPuntosExtraDeTorneo(torneo); 
+                restarPuntosExtraDeTorneo(torneo); // Esto también añade jugadores a recalcularPuntosGlobalesPara
+                // Asegurar que todos los jugadores del torneo se consideren para recálculo global
+                // ya que sus puntos extra del torneo se eliminaron.
                 torneo.jugadores.forEach(j => recalcularPuntosGlobalesPara.add(j.nombre)); 
-                if(torneo.tipo === 'parejas') torneo.parejas.forEach(p => p.jugadoresNombres.forEach(n => recalcularPuntosGlobalesPara.add(n)));
+                if(torneo.tipo === 'parejas') {
+                    torneo.parejas.forEach(p => p.jugadoresNombres.forEach(n => recalcularPuntosGlobalesPara.add(n)));
+                }
             }
             torneo.estado = 'actual'; 
             torneo.rankingFinal = null; 
-            // Asegurar que los puntos extra en el objeto torneo estén a 0
             torneo.jugadores.forEach(j => j.puntosExtra = 0);
             if (torneo.tipo === 'parejas') torneo.parejas.forEach(p => p.puntosExtra = 0);
             console.log("Torneo revertido a 'actual'. Rondas posteriores eliminadas.");
         }
-
+        
         // 3. Asignar nuevo ganador al partido actual y sumar sus puntos (si hay un nuevo ganador)
         partido.ganadorEquipoKey = nuevoGanadorKey;
         if (nuevoGanadorKey) {
             const puntosNuevos = PUNTOS_POR_CANCHA[canchaNum];
             const nuevosGanadoresNombres = nuevoGanadorKey === 'equipo1' ? partido.equipo1 : partido.equipo2;
             const datosParejasActual = torneo.tipo === 'parejas' ? partido.datosParejasSiAplica : null;
-
+            
             nuevosGanadoresNombres.forEach(n => recalcularPuntosGlobalesPara.add(n));
             modificarPuntosRondaYTorneo(torneo, nuevosGanadoresNombres, datosParejasActual, nuevoGanadorKey, puntosNuevos, canchaNum, true);
         }
-
-        // 4. Si el torneo era originalmente finalizado y se hicieron cambios (o se borraron rondas),
-        // recalcular los puntos globales de todos los jugadores afectados.
+        
+        // 4. Si el torneo era originalmente finalizado y se hicieron cambios, recalcular puntos globales.
         if (esEdicionDeFinalizadoOriginal) {
             recalcularPuntosGlobalesPara.forEach(nombreJugador => {
                 if(jugadoresGlobal[nombreJugador]) recalcularPuntosGlobalesJugador(nombreJugador);
@@ -616,11 +612,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const jug=t.jugadores.find(j=>j.nombre===n && j.parejaId===pIdA); 
                     if(jug){
                         jug.puntosRonda=(jug.puntosRonda||0)+cantP;
-                        // Si se necesita rastrear victoriasEnCancha1 para jugadores individuales en torneos de parejas
-                        // if(esC1){ 
-                        //     if(esVic && cantP > 0) jug.victoriasEnCancha1=(jug.victoriasEnCancha1||0)+1; 
-                        //     else if (cantP < 0 && (jug.victoriasEnCancha1||0) > 0) jug.victoriasEnCancha1--;
-                        // }
                     }
                 });
             }
@@ -639,12 +630,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (esRefinalizacion) {
             restarPuntosExtraDeTorneo(torneo); 
         }
-
+    
         const calcularBalanceEnfrentamientosDirectos = (objA, objB, torneoConsiderado) => {
             let victoriasA = 0; let victoriasB = 0;
             const nombresA = torneoConsiderado.tipo === 'individual' ? [objA.nombre] : objA.jugadoresNombres;
             const nombresB = torneoConsiderado.tipo === 'individual' ? [objB.nombre] : objB.jugadoresNombres;
-
+        
             torneoConsiderado.rondas.forEach(ronda => {
                 ronda.partidos.forEach(partido => {
                     if (!partido.equipo1 || !partido.equipo2) return;
@@ -652,7 +643,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const equipo2EsA = nombresA.every(n => partido.equipo2.includes(n)) && nombresA.length === partido.equipo2.length;
                     const equipo1EsB = nombresB.every(n => partido.equipo1.includes(n)) && nombresB.length === partido.equipo1.length;
                     const equipo2EsB = nombresB.every(n => partido.equipo2.includes(n)) && nombresB.length === partido.equipo2.length;
-
+        
                     if ((equipo1EsA && equipo2EsB) || (equipo2EsA && equipo1EsB)) {
                         if (partido.ganadorEquipoKey === 'equipo1') {
                             if (equipo1EsA) victoriasA++; else if (equipo1EsB) victoriasB++;
@@ -664,7 +655,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             return victoriasA - victoriasB;
         };
-
+    
         const compararJugadoresOParejas = (a, b) => {
             if ((a.puntosRonda || 0) !== (b.puntosRonda || 0)) return (b.puntosRonda || 0) - (a.puntosRonda || 0);
             const victoriasC1A = a.victoriasEnCancha1 || 0; const victoriasC1B = b.victoriasEnCancha1 || 0;
@@ -678,10 +669,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (torneo.tipo === 'individual' && a.idOriginal !== undefined && b.idOriginal !== undefined) return a.idOriginal - b.idOriginal;
             return 0;
         };
-
+    
         let entidadesParaOrdenar = torneo.tipo === 'individual' ? [...torneo.jugadores] : [...torneo.parejas];
         entidadesParaOrdenar.sort(compararJugadoresOParejas);
-
+    
         torneo.rankingFinal = entidadesParaOrdenar.map((entidad, index) => {
             const posicion = index + 1;
             const puntosExtra = (torneo.tipo === 'individual' ? PUNTOS_EXTRA_INDIVIDUAL[posicion] : PUNTOS_EXTRA_PAREJAS[posicion]) || 0;
@@ -729,9 +720,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         // Recalcular puntos globales para los que perdieron puntos extra
-        jugadoresAfectadosGlobal.forEach(nJ => {
-            if(jugadoresGlobal[nJ]) recalcularPuntosGlobalesJugador(nJ);
-        });
+        // Esto se hará en registrarResultadoPartido o al finalizar el torneo de nuevo
+        // Aquí solo reseteamos los puntos extra del torneo.
     }
     function actualizarPuntosGlobalesTrasFinalizar(t) { if (t.tipo === 'individual') t.jugadores.forEach(j => { if (jugadoresGlobal[j.nombre]) recalcularPuntosGlobalesJugador(j.nombre); }); else t.parejas.forEach(p => p.jugadoresNombres.forEach(nJ => { if (jugadoresGlobal[nJ]) recalcularPuntosGlobalesJugador(nJ); }));}
     function recalcularPuntosGlobalesJugador(nJ) {
@@ -764,7 +754,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     filtroTipoTorneoResultadosEl.addEventListener('change', renderizarResultadosGlobales);
     if (filtroMesResultadosEl) filtroMesResultadosEl.addEventListener('change', renderizarResultadosGlobales);
-
+    
     function popularFiltroMeses() {
         if (!categoriaActiva || !filtroMesResultadosEl) return; 
         filtroMesResultadosEl.innerHTML = '<option value="todos">Todos los tiempos</option>';
@@ -849,13 +839,13 @@ document.addEventListener('DOMContentLoaded', () => {
             tablaResultadosGlobalesBodyEl.innerHTML = `<tr><td colspan="3" data-label="Info">${msg}</td></tr>`; 
         }
     }
-
+    
     btnExportarRankingGlobalEl.addEventListener('click', () => {
         if (!categoriaActiva) return; 
         tablaExportRankingGlobalBodyEl.innerHTML = ''; 
         const tipoFiltro = filtroTipoTorneoResultadosEl.value;
         const mesAnioFiltro = filtroMesResultadosEl ? filtroMesResultadosEl.value : 'todos';
-
+        
         const jugadoresPuntosFiltrados = {}; 
         Object.keys(jugadoresGlobal).forEach(nombreJugador => {
             jugadoresPuntosFiltrados[nombreJugador] = 0;
@@ -886,7 +876,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (jugArray.length === 0) { alert("No hay resultados para exportar con los filtros seleccionados."); return; }
         jugArray.forEach((jug, idx) => { const tr = document.createElement('tr'); tr.innerHTML = `<td>${idx + 1}</td><td>${jug.nombre}</td><td>${jug.puntosMostrados}</td>`; tablaExportRankingGlobalBodyEl.appendChild(tr); });
-
+        
         let tituloFiltroPeriodo = "";
         if (mesAnioFiltro !== 'todos' && filtroMesResultadosEl) {
             const opcionSeleccionada = Array.from(filtroMesResultadosEl.options).find(opt => opt.value === mesAnioFiltro);
@@ -906,7 +896,7 @@ document.addEventListener('DOMContentLoaded', () => {
             exportableGlobalRankingEl.style.display = 'none';
         }).catch(err => { console.error("Error exportando ranking:", err); alert("Error generando imagen."); exportableGlobalRankingEl.style.display = 'none'; });
     });
-
+    
     function exportarResultadosTorneoEspecifico(torneoId) {
         if (!categoriaActiva) return; const torneo = torneos.find(t => t.id === torneoId);
         if (!torneo || torneo.estado !== 'historico' || !torneo.rankingFinal) { alert("Solo torneos finalizados."); return; }
@@ -983,7 +973,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (torneoActualSeleccionadoId) renderizarDetalleTorneo(torneoActualSeleccionadoId); renderizarResultadosGlobales();
         alert(`Nombre cambiado de "${nActual}" a "${nNuevo}" en ${categoriaActiva}.`);
     });
-
+    
     function confirmarEliminarJugador(nombreJugador) {
         if (!categoriaActiva || !jugadoresGlobal[nombreJugador]) return;
         const torneosActivosConJugador = torneos.filter(t => 
@@ -1012,7 +1002,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("No hay categoría activa para eliminar el torneo.");
             return;
         }
-
+        
         const torneoIndex = torneos.findIndex(t => t.id === torneoId);
         if (torneoIndex === -1) {
             console.error("Torneo no encontrado para eliminar:", torneoId, "en torneos:", torneos);
@@ -1038,7 +1028,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     recalcularPuntosGlobalesJugador(nombreJugador);
                 }
             });
-
+            
             guardarDatosGlobales().then(() => {
                 console.log("Datos guardados en Google Sheets después de eliminar torneo.");
                 alert(`Torneo "${torneoAEliminar.nombre}" eliminado permanentemente.`);
