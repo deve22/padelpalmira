@@ -15,11 +15,12 @@
 <body>
     <div id="seleccionCategoriaScreen" class="category-screen active-screen">
         <div class="category-container">
+            <button id="adminLockBtn" class="admin-lock-btn" title="Modo Administrador"><i class="fas fa-lock"></i></button>
             <img src="Images/PadelPalmira.PNG" alt="Padel Palmira Escaleras Logo" class="app-logo"> <h2>Padel Palmira Escaleras</h2>
             <p>Selecciona o administra una categoría para continuar:</p>
             <div id="listaCategoriasContainer" class="category-list">
                 </div>
-            <div class="category-actions">
+            <div id="categoryActions" class="category-actions admin-feature">
                 <input type="text" id="inputNuevaCategoria" class="styled-input" placeholder="Nombre nueva categoría">
                 <button id="btnAgregarCategoria" class="action-button primary-action"><i class="fas fa-plus"></i> Agregar Categoría</button>
             </div>
@@ -46,7 +47,7 @@
                 <div class="content-card">
                     <h2 id="bienvenidoMsg">Bienvenido</h2>
                     <p>Selecciona el tipo de torneo que deseas organizar o gestionar en esta categoría.</p>
-                    <div class="tournament-type-selection">
+                    <div class="tournament-type-selection admin-feature">
                         <button id="btnGoToCrearIndividual" class="action-button large-button">
                             <i class="fas fa-user"></i> Individual (12 Jugadores)
                         </button>
@@ -54,14 +55,27 @@
                             <i class="fas fa-users"></i> Parejas Fijas (6 Parejas)
                         </button>
                     </div>
-                </div>
+                    
+                    <div id="inicioDashboard" class="inicio-dashboard">
+                        <div class="dashboard-section">
+                            <h4><i class="fas fa-crown"></i> Top 5 Jugadores (<span class="dynamic-category-name">[Categoría]</span>)</h4>
+                            <ul id="top5RankingList" class="dashboard-list">
+                                </ul>
+                        </div>
+                        <div id="ultimoTorneoSection" class="dashboard-section hidden">
+                            <h4><i class="fas fa-history"></i> Último Torneo Finalizado</h4>
+                            <div id="ultimoTorneoInfo" class="dashboard-torneo-card">
+                                </div>
+                        </div>
+                    </div>
+                    </div>
             </section>
 
             <section id="torneos" class="tab-content">
                 <div class="content-card">
                     <div class="torneos-header">
                         <h2>Torneos de <span class="dynamic-category-name">[Categoría]</span></h2>
-                        <button id="btnAbrirModalCrearTorneo" class="action-button primary-action"><i class="fas fa-plus"></i> Crear Nuevo</button>
+                        <button id="btnAbrirModalCrearTorneo" class="action-button primary-action admin-feature"><i class="fas fa-plus"></i> Crear Nuevo</button>
                     </div>
 
                     <div id="vistaListaTorneos">
@@ -75,14 +89,15 @@
                         <button id="btnVolverListaTorneos" class="action-button subtle-button back-button"><i class="fas fa-arrow-left"></i> Volver a Torneos</button>
                         <div class="detail-header">
                             <h3 id="nombreTorneoDetalle"></h3>
-                            <div class="tournament-actions-detail">
+                            <button id="btnEditarNombreTorneo" class="action-button subtle-button icon-only admin-feature" title="Editar Nombre del Torneo"><i class="fas fa-pen"></i></button>
+                            <div class="tournament-actions-detail admin-feature">
                                 <button id="btnEliminarTorneoDetalle" class="action-button danger-action icon-only" title="Eliminar Torneo"><i class="fas fa-trash"></i></button>
                                 <button id="btnExportarTorneoDetalle" class="action-button icon-only" title="Exportar Resultados del Torneo (JPG)"><i class="fas fa-share-square"></i></button>
                             </div>
                         </div>
                         <div id="infoTipoTorneoDetalle" class="tournament-info-banner"></div>
                         <h4><i class="fas fa-tasks icon-subtle"></i> Rondas y Resultados</h4>
-                        <div class="rondas-actions">
+                        <div class="rondas-actions admin-feature">
                             <button id="btnGenerarSiguienteRonda" class="action-button" style="display:none;"><i class="fas fa-cogs"></i> Generar Siguiente Ronda</button>
                             <button id="btnFinalizarTorneo" class="action-button danger-action" style="display: none;"><i class="fas fa-flag-checkered"></i> Finalizar Torneo</button>
                         </div>
@@ -92,15 +107,6 @@
                             <thead><tr><th>Jugador/Pareja</th><th>P. Rondas</th><th>P. Extra</th><th>Total Puntos Palmira</th></tr></thead>
                             <tbody></tbody>
                         </table>
-                        <div id="exportableTournamentDetail" class="exportable-content" style="display:none;">
-                            <img src="Images/PadelPalmira.PNG" alt="Logo Padel Palmira" class="export-logo"> <h3 id="exportTournamentTitle">Resultados Torneo: </h3>
-                            <p id="exportTournamentDate"></p>
-                            <table id="tablaExportTorneo" class="styled-table minimal-table">
-                                <thead><tr><th>Pos.</th><th>Jugador/Pareja</th><th>Total Puntos Palmira</th></tr></thead>
-                                <tbody></tbody>
-                            </table>
-                            <p class="export-footer">Resultados generados por Padel Palmira Escaleras</p>
-                        </div>
                     </div>
                 </div>
             </section>
@@ -152,7 +158,7 @@
                 </div>
             </section>
         </main>
-
+        
         <div id="modalCrearTorneo" class="modal">
             <div class="modal-content">
                 <span class="close-button">&times;</span>
@@ -185,6 +191,19 @@
             </div>
         </div>
 
+        <div id="modalEditarCategoria" class="modal">
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <h3>Editar Nombre de Categoría</h3>
+                <label for="nombreCategoriaActual">Nombre Actual:</label>
+                <input type="text" id="nombreCategoriaActual" class="styled-input" readonly>
+                <label for="nombreCategoriaNuevo">Nuevo Nombre:</label>
+                <input type="text" id="nombreCategoriaNuevo" class="styled-input" required>
+                <p class="modal-warning">Advertencia: Cambiar este nombre actualizará la categoría en toda la aplicación. Esta acción es irreversible.</p>
+                <button id="btnConfirmarEditarCategoria" class="action-button primary-action full-width-button"><i class="fas fa-edit"></i> Guardar Cambios</button>
+            </div>
+        </div>
+
         <div id="modalEditarResultado" class="modal" style="display:none;"> <div class="modal-content">
                 <span class="close-button">&times;</span>
                 <h3 id="tituloModalEditarRonda">Registrar/Editar Resultado</h3>
@@ -195,7 +214,29 @@
                 </div>
         </div>
 
-    </div> <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+        <div id="exportableMobileReport" class="exportable-content-mobile" style="display:none;">
+            <div class="report-header">
+                <img src="Images/PadelPalmira.PNG" alt="Logo Padel Palmira" class="report-logo">
+                <h3 id="reportTournamentTitle"></h3>
+                <p id="reportTournamentInfo"></p>
+            </div>
+            <div class="report-body">
+                <div class="report-table-header">
+                    <span>Pos.</span>
+                    <span>Jugador / Pareja</span>
+                    <span>P. Rondas</span>
+                    <span>Total</span>
+                </div>
+                <ul id="reportPlayerList" class="report-player-list">
+                    </ul>
+            </div>
+            <div class="report-footer">
+                <p>Resultados por Padel Palmira Escaleras</p>
+            </div>
+        </div>
+
+    </div> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
